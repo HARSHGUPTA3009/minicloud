@@ -1,0 +1,17 @@
+{
+  "name": "minicloud",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "shared"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:worker": "npm run worker --workspace=backend",
+    "docker:up": "docker-compose up -d postgres redis traefik",
+    "docker:down": "docker-compose down"
+  }
+}
