@@ -32,15 +32,15 @@
 
 **Login**
 
-![Login page](frontend/public/login.png)
+![Login page](/public/login.png)
 
 **Dashboard**
 
-![Dashboard](frontend/public/dashboard.png)
+![Dashboard](/public/dashboard.png)
 
 **Projects**
 
-![Projects list](frontend/public/projects.png)
+![Projects list](/public/projects.png)
 
 ---
 
