@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, FolderGit2, Settings, Zap, LogOut, ChevronRight } from "lucide-react";
+import { LayoutDashboard, FolderGit2, LogOut, Zap } from "lucide-react";
 
 const nav = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -9,35 +9,53 @@ const nav = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   return (
-    <div className="flex h-screen bg-[#080810] text-white overflow-hidden">
-      <aside className="w-60 flex-shrink-0 bg-[#0c0c18] border-r border-white/[0.06] flex flex-col">
-        <div className="h-14 flex items-center px-5 border-b border-white/[0.06]">
+    <div className="flex h-screen bg-neutral-100 overflow-hidden font-mono">
+      <aside className="w-56 flex-shrink-0 bg-white border-r border-neutral-200 flex flex-col">
+
+        {/* Brand */}
+        <div className="h-14 flex items-center px-5 border-b border-neutral-200">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-500/20">
-              <Zap className="w-3.5 h-3.5 text-white" />
+            <div className="w-7 h-7 bg-neutral-900 rounded-sm flex items-center justify-center">
+              <Zap className="w-3.5 h-3.5 text-white" strokeWidth={2} />
             </div>
-            <span className="font-semibold text-[15px] tracking-tight">MiniCloud</span>
+            <span className="text-[15px] font-medium text-neutral-900 tracking-tight">MiniCloud</span>
           </div>
         </div>
-        <nav className="flex-1 px-2.5 py-3 space-y-0.5">
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-3 space-y-0.5">
           {nav.map(({ href, icon: Icon, label }) => {
             const active = pathname === href || (href !== "/" && pathname.startsWith(href));
             return (
-              <Link key={href} to={href} className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${active ? "bg-violet-500/10 text-violet-300 border border-violet-500/15" : "text-white/40 hover:text-white/75 hover:bg-white/[0.04]"}`}>
-                <Icon className="w-4 h-4 flex-shrink-0" />
+              <Link
+                key={href}
+                to={href}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-sm text-[11px] tracking-[0.5px] uppercase font-medium transition-all ${
+                  active
+                    ? "bg-neutral-900 text-white"
+                    : "text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} />
                 {label}
-                {active && <ChevronRight className="w-3 h-3 ml-auto opacity-50" />}
               </Link>
             );
           })}
         </nav>
-        <div className="p-2.5 border-t border-white/[0.06]">
-          <button onClick={() => { localStorage.removeItem("mc_token"); window.location.href = "/login"; }} className="flex items-center gap-2.5 px-3 py-2 w-full rounded-lg text-[13px] text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-all">
-            <LogOut className="w-4 h-4" /> Sign out
+
+        {/* Sign out */}
+        <div className="p-3 border-t border-neutral-200">
+          <button
+            onClick={() => { localStorage.removeItem("mc_token"); window.location.href = "/login"; }}
+            className="flex items-center gap-2.5 px-3 py-2 w-full rounded-sm text-[11px] tracking-[0.5px] uppercase text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-all"
+          >
+            <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Sign out
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">{children}</main>
+
+      <main className="flex-1 overflow-auto bg-neutral-50">{children}</main>
     </div>
   );
 }

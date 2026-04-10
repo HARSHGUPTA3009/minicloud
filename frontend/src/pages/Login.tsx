@@ -5,50 +5,155 @@ import { Zap } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login"|"register">("login");
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [form, setForm] = useState({ email: "", password: "", name: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    setError(""); setLoading(true);
+    setError("");
+    setLoading(true);
     try {
-      const data = mode === "login" ? await authApi.login(form.email, form.password) : await authApi.register(form.email, form.password, form.name);
+      const data =
+        mode === "login"
+          ? await authApi.login(form.email, form.password)
+          : await authApi.register(form.email, form.password, form.name);
       localStorage.setItem("mc_token", data.token);
       navigate("/");
-    } catch (e: any) { setError(e.response?.data?.error || "Something went wrong"); }
-    finally { setLoading(false); }
+    } catch (e: any) {
+      setError(e.response?.data?.error || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const isLogin = mode === "login";
+
   return (
-    <div className="min-h-screen bg-[#080810] flex items-center justify-center p-4">
-      <div className="w-full max-w-[360px]">
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-xl shadow-violet-500/25">
-            <Zap className="w-4.5 h-4.5 text-white" />
+    <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-6 font-mono">
+      <div className="w-full max-w-[380px]">
+
+        {/* Card */}
+        <div className="bg-white border border-neutral-200 rounded-sm p-10">
+
+          {/* Brand */}
+          <div className="flex items-center gap-2.5 mb-8">
+            <div className="w-8 h-8 bg-neutral-900 rounded-sm flex items-center justify-center">
+              <Zap className="w-4 h-4 text-white" strokeWidth={2} />
+            </div>
+            <span className="text-[15px] font-medium text-neutral-900 tracking-tight">MiniCloud</span>
+            <div className="w-px h-4 bg-neutral-200" />
+            <span className="text-[11px] text-neutral-400 tracking-widest uppercase">PaaS</span>
           </div>
-          <span className="font-bold text-xl text-white">MiniCloud</span>
-        </div>
-        <div className="bg-[#0c0c18] border border-white/[0.07] rounded-2xl p-7">
-          <h2 className="text-[17px] font-bold text-white mb-0.5">{mode === "login" ? "Welcome back" : "Create account"}</h2>
-          <p className="text-[13px] text-white/35 mb-5">{mode === "login" ? "Sign in to your account" : "Start deploying in minutes"}</p>
-          <div className="space-y-2.5">
-            {mode === "register" && <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Full name" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-white text-[13px] focus:outline-none focus:border-violet-500/40 placeholder:text-white/20" />}
-            <input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="Email" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-white text-[13px] focus:outline-none focus:border-violet-500/40 placeholder:text-white/20" />
-            <input type="password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} onKeyDown={e=>e.key==="Enter"&&submit()} placeholder="Password" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-white text-[13px] focus:outline-none focus:border-violet-500/40 placeholder:text-white/20" />
+
+          {/* Mode tabs */}
+          <div className="flex border border-neutral-200 rounded-sm overflow-hidden mb-7">
+            {(["login", "register"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setMode(m); setError(""); }}
+                className={`flex-1 py-2 text-[10px] tracking-[0.6px] uppercase transition-colors ${
+                  mode === m
+                    ? "bg-neutral-900 text-white"
+                    : "text-neutral-400 hover:text-neutral-700"
+                }`}
+              >
+                {m === "login" ? "Sign in" : "Register"}
+              </button>
+            ))}
           </div>
-          {error && <p className="text-red-400 text-[12px] mt-2.5">{error}</p>}
-          <button onClick={submit} disabled={loading} className="w-full mt-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl text-white text-[13px] font-semibold transition-colors">
-            {loading ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
+
+          {/* Heading */}
+          <h1 className="font-serif italic text-[22px] text-neutral-900 leading-tight mb-1">
+            {isLogin ? "Welcome back." : "Create account."}
+          </h1>
+          <p className="text-[10px] text-neutral-400 tracking-widest uppercase mb-7">
+            {isLogin ? "Authenticated access only" : "Deploy in minutes"}
+          </p>
+
+          {/* Fields */}
+          <div className="space-y-4">
+            {!isLogin && (
+              <Field
+                label="Full name"
+                type="text"
+                value={form.name}
+                placeholder="Ada Lovelace"
+                onChange={(v) => setForm({ ...form, name: v })}
+              />
+            )}
+            <Field
+              label="Email"
+              type="email"
+              value={form.email}
+              placeholder="you@example.com"
+              onChange={(v) => setForm({ ...form, email: v })}
+            />
+            <Field
+              label="Password"
+              type="password"
+              value={form.password}
+              placeholder="••••••••••••"
+              onChange={(v) => setForm({ ...form, password: v })}
+              onKeyDown={(e) => e.key === "Enter" && submit()}
+            />
+          </div>
+
+          {/* Error */}
+          {error && (
+            <p className="mt-4 text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-sm px-3 py-2">
+              {error}
+            </p>
+          )}
+
+          {/* Submit */}
+          <button
+            onClick={submit}
+            disabled={loading}
+            className="w-full mt-6 py-[11px] bg-neutral-900 hover:bg-neutral-700 disabled:bg-neutral-300 text-white text-[11px] tracking-[0.6px] uppercase font-medium transition-colors rounded-sm"
+          >
+            {loading ? "Please wait..." : isLogin ? "Sign in" : "Create account"}
           </button>
-          <p className="text-center text-white/25 text-[12px] mt-4">
-            {mode === "login" ? "No account? " : "Have an account? "}
-            <button onClick={()=>setMode(mode==="login"?"register":"login")} className="text-violet-400 hover:text-violet-300 transition-colors">
-              {mode === "login" ? "Sign up" : "Sign in"}
+
+          {/* Footer */}
+          <p className="mt-6 text-center text-[11px] text-neutral-400 tracking-wide">
+            {isLogin ? "No account? " : "Have an account? "}
+            <button
+              onClick={() => { setMode(isLogin ? "register" : "login"); setError(""); }}
+              className="text-neutral-900 underline underline-offset-2 hover:text-neutral-500 transition-colors"
+            >
+              {isLogin ? "Register" : "Sign in"}
             </button>
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Field({
+  label, type, value, placeholder, onChange, onKeyDown,
+}: {
+  label: string;
+  type: string;
+  value: string;
+  placeholder: string;
+  onChange: (v: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-[10px] text-neutral-500 tracking-widest uppercase mb-1.5">
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        className="w-full bg-neutral-50 border border-neutral-200 rounded-sm px-3 py-[10px] text-[13px] font-mono text-neutral-900 placeholder:text-neutral-300 focus:outline-none focus:border-neutral-900 focus:bg-white transition-colors"
+      />
     </div>
   );
 }
