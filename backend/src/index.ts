@@ -28,8 +28,41 @@ export const io = new SocketIO(httpServer, { cors: { origin: "*" } });
 app.use(helmet({ crossOriginEmbedderPolicy: false }));
 app.use(cors({ origin: "*" }));
 app.use(morgan("dev"));
-app.use(express.json({ limit: "10mb" }));
 
+app.use(express.json({ limit: "10mb" }));
+app.use(async (req, res, next) => {
+  try {
+    const host = req.headers.host?.split(":")[0];
+
+    if (!host) return next();
+
+    const subdomain = host.split(".")[0];
+
+const deployment = await db
+  .select()
+  .from(deployments)
+  .where(eq(deployments.isActive, true))
+  .limit(1)
+  .then(res => res[0]);
+if (!deployment) {
+  return next();
+}	
+    if (!deployment?.containerName) return next();
+
+    const target = `http://${deployment.containerName}:3000`;
+
+    console.log("Proxying →", target);
+
+    proxy.web(req, res, { target }, (err) => {
+      console.error("Proxy error:", err);
+      res.status(502).send("Bad Gateway");
+    });
+
+  } catch (err) {
+    console.error("Proxy middleware error:", err);
+    next();
+  }
+});
 app.post("/auth/register", async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -63,19 +96,21 @@ app.use("/", async (req, res) => {
       where: eq(deployments.isActive, true),
     });
 
-    if (!active?.localUrl) {
+    if (!active?.containerName) {
       return res.status(404).send("No active deployment");
     }
 
-    req.url = req.url || "/";
-    
-    proxy.web(req, res, { 
-      target: active.localUrl,
+    const target = `http://${active.containerName}:3000`;
+
+    console.log("👉 Proxying to:", target);
+
+    proxy.web(req, res, {
+      target,
       changeOrigin: true,
-      selfHandleResponse: false,
-    }, (err) => {
+    }, () => {
       res.status(502).send("Deployment unreachable");
     });
+
   } catch (e: any) {
     res.status(500).send(e.message);
   }

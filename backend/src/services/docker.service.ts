@@ -37,8 +37,7 @@ export async function buildImage(
 
         if (event.error)
           onLog({
-            timestamp: new Date().toISOString(),
-            level: "error",
+            timestamp: new Date().toISOString(),            level: "error",
             message: event.error,
             source: "build",
           });
@@ -50,46 +49,54 @@ export async function buildImage(
 }
 
 /* ------------------------------ RUN CONTAINER ------------------------------ */
-
 export async function runContainer(
   imageTag: string,
   subdomain: string,
   envVars: EnvVar[],
   limits: ResourceLimits,
-  port: number
-): Promise<string> {
+  _port: number // no longer used
+): Promise<{ containerId: string; containerName: string }> {
+
+  const containerName = `mc_${subdomain}_${Date.now()}`;
+
   const container = await docker.createContainer({
     Image: imageTag,
-    name: `mc_${subdomain}_${Date.now()}`,
+    name: containerName,
+
     Env: envVars.map((e) => `${e.key}=${e.value}`),
+
     ExposedPorts: { "3000/tcp": {} },
+
     HostConfig: {
       Memory: limits.memoryMb * 1024 * 1024,
       CpuShares: limits.cpuShares,
       RestartPolicy: { Name: "unless-stopped" },
-      PortBindings: {
-        "3000/tcp": [{ HostPort: String(port) }],
-      },
+
+      // ❌ REMOVE THIS COMPLETELY
+      // PortBindings: {
+      //   "3000/tcp": [{ HostPort: String(port) }],
+      // },
     },
+
     NetworkingConfig: {
       EndpointsConfig: {
-        minicloud_default: {},
+        minicloud_default: {}, // ✅ THIS is the key fix
       },
     },
+
     Labels: {
-      "traefik.enable": "true",
-      [`traefik.http.routers.${subdomain}.rule`]: `Host(\`${subdomain}.${config.baseDomain}\`)`,
-      [`traefik.http.services.${subdomain}.loadbalancer.server.port`]: "3000",
       "minicloud.managed": "true",
-      "minicloud.port": String(port),
       "minicloud.subdomain": subdomain,
     },
   });
 
   await container.start();
-  return container.id;
-}
 
+  return {
+    containerId: container.id,
+    containerName,
+  };
+}
 /* ------------------------------ STOP CONTAINER ------------------------------ */
 
 export async function stopContainer(containerId: string): Promise<void> {

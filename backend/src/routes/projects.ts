@@ -44,22 +44,46 @@ router.get("/", async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
-    const all = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.userId, req.user.id))
-      .orderBy(desc(projects.createdAt));
+    const userProjects = await db.query.projects.findMany({
+      where: eq(projects.userId, req.user.id),
+      orderBy: desc(deployments.id),
+    });
 
-    res.json({ projects: all });
+    res.json({ projects: userProjects });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
 });
+router.get("/:id", async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
-/* -------------------------------------------------------------------------- */
-/* CREATE PROJECT                                                             */
-/* -------------------------------------------------------------------------- */
+    const project = await db.query.projects.findFirst({
+      where: and(
+        eq(projects.id, req.params.id),
+        eq(projects.userId, req.user.id)
+      ),
+    });
 
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    const projectDeployments = await db.query.deployments.findMany({
+      where: eq(deployments.projectId, project.id),
+      orderBy: desc(deployments.id),
+    });
+
+    res.json({
+      ...project,
+      deployments: projectDeployments,
+    });
+
+  } catch (e: any) {
+    console.error("GET PROJECT ERROR:", e);
+    res.status(500).json({ error: e.message });
+  }
+});
 router.post("/", async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });

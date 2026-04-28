@@ -39,6 +39,7 @@ export const deployments = pgTable("deployments", {
   status: deploymentStatusEnum("status").notNull().default("queued"),
   buildStep: text("build_step").notNull().default("clone"),
   imageTag: text("image_tag").notNull(),
+	containerName: text("container_name"),
   containerId: text("container_id"),
   port: integer("port"),
   logs: jsonb("logs").notNull().default([]),

@@ -1,7 +1,7 @@
 import { Worker, Job } from "bullmq";
 import { db } from "../db/client";
 import { deployments, projects } from "../db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and,ne } from "drizzle-orm";
 import { cloneRepo, cleanupBuild } from "../services/git.service";
 import {
   buildImage,
@@ -124,7 +124,7 @@ async function processBuild(job: Job<BuildJob>) {
 
     log("info", `Using port ${port}`, "deploy");
 
-    const containerId  = await runContainer(
+	const { containerId, containerName } = await runContainer(
       imageTag,
       subdomain,
       envVars ?? [],
@@ -151,11 +151,15 @@ async function processBuild(job: Job<BuildJob>) {
       ),
     });
 
-    await db
-      .update(deployments)
-      .set({ isActive: false })
-      .where(eq(deployments.projectId, projectId));
-
+await db
+  .update(deployments)
+  .set({ isActive: false })
+  .where(
+    and(
+      eq(deployments.projectId, projectId),
+      ne(deployments.id, deploymentId)
+    )
+  );
     /* ---------------- FINAL STATE ---------------- */
 
 /* ---------------- FINAL STATE ---------------- */
@@ -166,12 +170,13 @@ async function processBuild(job: Job<BuildJob>) {
         status: "running",
         buildStep: "done",
         containerId,
+	containerName,
         isActive: true,
         healthStatus: "healthy",
         finishedAt: new Date(),
         duration: Math.round((Date.now() - started) / 1000),
         deploymentPort: port,
-        localUrl: `http://host.docker.internal:${port}`,
+localUrl: `http://${containerName}:3000`,
         deploymentUrl: `http://${subdomain}.${config.baseDomain}`,
       })
       .where(eq(deployments.id, deploymentId));
@@ -257,3 +262,4 @@ process.on("SIGTERM", async () => {
   await worker.close();
   process.exit(0);
 });
+
